@@ -9,6 +9,8 @@ namespace EmployeeService.Domain.Interfaces.Repositories
 {
     public interface IEmployeeRepository : IRepository<Employee>
     {
+        Task<Employee> GetEmployeeWithDetailsAsync(int id);
+        Task<bool> PartialUpdateEmployeeAsync(int id, Dictionary<string, object> updates);
         Task<IEnumerable<Employee>> GetEmployeesByCompanyAsync(int companyId);
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(int companyId, string departmentName);
     }

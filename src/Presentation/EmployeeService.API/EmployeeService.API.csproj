@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\EmployeeService.Application\EmployeeService.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\EmployeeService.Persistence\EmployeeService.Persistence.csproj" />
   </ItemGroup>
 
 </Project>
