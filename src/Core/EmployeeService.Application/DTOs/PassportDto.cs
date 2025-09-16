@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EmployeeService.Domain.Entities
+namespace EmployeeService.Application.DTOs
 {
-    public class Passport
+    public class PassportDto
     {
-        public int Id { get; set; }
         public string Type { get; set; }
         public string Number { get; set; }
     }
