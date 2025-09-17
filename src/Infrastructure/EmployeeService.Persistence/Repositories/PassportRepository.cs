@@ -8,6 +8,10 @@ namespace EmployeeService.Persistence.Repositories;
 public class PassportRepository : IPassportRepository
 {
     private readonly IDbConnection _connection;
+    static PassportRepository()
+    {
+        DefaultTypeMap.MatchNamesWithUnderscores = true;
+    }
 
     public PassportRepository(IDbConnection connection)
     {

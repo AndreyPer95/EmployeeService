@@ -8,6 +8,11 @@ namespace EmployeeService.Persistence.Repositories;
 public class DepartmentRepository : IDepartmentRepository
 {
     private readonly IDbConnection _connection;
+    
+    static DepartmentRepository()
+    {
+        DefaultTypeMap.MatchNamesWithUnderscores = true;
+    }
 
     public DepartmentRepository(IDbConnection connection)
     {

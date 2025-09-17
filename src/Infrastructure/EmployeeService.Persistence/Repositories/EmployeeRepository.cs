@@ -9,6 +9,11 @@ public class EmployeeRepository : IEmployeeRepository
 {
     private readonly IDbConnection _connection;
 
+    static EmployeeRepository()
+    {
+        DefaultTypeMap.MatchNamesWithUnderscores = true;
+    }
+
     public EmployeeRepository(IDbConnection connection)
     {
         _connection = connection;
@@ -27,10 +32,10 @@ public class EmployeeRepository : IEmployeeRepository
         var sql = @"SELECT e.id, e.name, e.surname, e.phone, e.company_id, e.department_id, e.passport_id,
                        d.id, d.company_id, d.name, d.phone,
                        p.id, p.type, p.number
-                    FROM employees e
-                    LEFT JOIN departments d ON e.department_id = d.id
-                    LEFT JOIN passports p ON e.passport_id = p.id
-                    WHERE e.company_id = @CompanyId";
+                FROM employees e
+                LEFT JOIN departments d ON e.department_id = d.id
+                LEFT JOIN passports p ON e.passport_id = p.id
+                WHERE e.company_id = @CompanyId";
 
         var employeeDict = new Dictionary<int, Employee>();
 
