@@ -107,15 +107,15 @@ public class EmployeeRepository : IEmployeeRepository
         try
         {
             var employee = await GetByIdAsync(id);
-            if (employee == null) return false;
+            if (employee == null) 
+                return false;
+            var employeeDeleted = await _connection.ExecuteAsync(
+                "DELETE FROM employees WHERE id = @Id",
+                new { Id = id });
             
             var passportDeleted = await _connection.ExecuteAsync(
                 "DELETE FROM passports WHERE id = @PassportId",
                 new { employee.PassportId });
-
-            var employeeDeleted = await _connection.ExecuteAsync(
-                "DELETE FROM employees WHERE id = @Id",
-                new { Id = id });
 
             return employeeDeleted > 0;
         }
