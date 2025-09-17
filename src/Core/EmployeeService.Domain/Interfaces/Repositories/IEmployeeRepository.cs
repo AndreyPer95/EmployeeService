@@ -9,6 +9,6 @@ namespace EmployeeService.Domain.Interfaces.Repositories
         Task<Employee> GetByIdAsync(int id);
         Task<IEnumerable<Employee>> GetByCompanyAsync(int companyId);
         Task<IEnumerable<Employee>> GetByDepartmentAsync(int companyId, string departmentName);
-        Task<bool>  DeleteWithPassportAsync(int id);
+        Task<bool>  DeleteAsync(int id);
     }
 }

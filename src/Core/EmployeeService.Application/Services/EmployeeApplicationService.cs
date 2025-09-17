@@ -61,7 +61,7 @@ public class EmployeeApplicationService : IEmployeeApplicationService
         {
             _unitOfWork.BeginTransaction();
 
-            var deleted = await _unitOfWork.Employees.DeleteWithPassportAsync(id);
+            var deleted = await _unitOfWork.Employees.DeleteAsync(id);
 
             _unitOfWork.Commit();
             return deleted;

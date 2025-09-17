@@ -16,21 +16,21 @@ public class DepartmentRepository : IDepartmentRepository
 
     public async Task<bool> UpdateAsync(Department department)
     {
-        var sql = @"UPDATE Departments 
-                   SET CompanyId = @CompanyId, Name = @Name, Phone = @Phone 
-                   WHERE Id = @Id";
+        var sql = @"UPDATE departments 
+                    SET company_id = @CompanyId, name = @Name, phone = @Phone 
+                    WHERE id = @Id";
         var rowsAffected = await _connection.ExecuteAsync(sql, department);
         return rowsAffected > 0;
     }
 
     public async Task<Department> GetByCompanyAndNameAsync(int companyId, string name)
     {
-        var sql = "SELECT * FROM Departments WHERE CompanyId = @CompanyId AND Name = @Name";
+        var sql = "SELECT * FROM departments WHERE company_id = @CompanyId AND name = @Name";
         return await _connection.QuerySingleOrDefaultAsync<Department>(sql, new { CompanyId = companyId, Name = name });
     }
     public async Task<IEnumerable<Department>> GetAllAsync()
     {
-        var sql = "SELECT * FROM Departments";
+        var sql = "SELECT * FROM departments";
         return await _connection.QueryAsync<Department>(sql);
     }
 }
