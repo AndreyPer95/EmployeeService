@@ -1,20 +1,20 @@
 ﻿using System.Data;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Npgsql;
 
 namespace EmployeeService.Persistence.Factories;
 
-public class SqlConnectionFactory : IDbConnectionFactory
+public class PostgreSqlConnectionFactory : IDbConnectionFactory
 {
     private readonly string _connectionString;
 
-    public SqlConnectionFactory(IConfiguration configuration)
+    public PostgreSqlConnectionFactory(IConfiguration configuration)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection");
     }
 
     public IDbConnection CreateConnection()
     {
-        return new SqlConnection(_connectionString);
+        return new NpgsqlConnection(_connectionString);
     }
 }

@@ -9,11 +9,10 @@ namespace EmployeeService.Application.Services
 {
     public interface IEmployeeApplicationService
     {
-        Task<int> CreateEmployeeAsync(CreateEmployeeDto employeeDto);
-        Task<bool> DeleteEmployeeAsync(int id);
-        Task<IEnumerable<EmployeeResponseDto>> GetEmployeesByCompanyAsync(int companyId);
-        Task<IEnumerable<EmployeeResponseDto>> GetEmployeesByDepartmentAsync(int companyId, string departmentName);
-        Task<bool> UpdateEmployeeAsync(int id, UpdateEmployeeDto updateDto);
-        Task<EmployeeResponseDto> GetEmployeeByIdAsync(int id);
+        Task<int> CreateAsync(CreateEmployeeDto employeeDto);
+        Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<EmployeeResponseDto>> GetByCompanyAsync(int companyId);
+        Task<IEnumerable<EmployeeResponseDto>> GetByDepartmentAsync(int companyId, string departmentName);
+        Task<bool> UpdateAsync(int id, UpdateEmployeeDto updateDto);
     }
 }

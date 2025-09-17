@@ -5,13 +5,16 @@ using EmployeeService.Domain.Interfaces.Repositories;
 
 namespace EmployeeService.Persistence.Repositories;
 
-public class PassportRepository : BaseRepository<Passport>, IPassportRepository
+public class PassportRepository : IPassportRepository
 {
-    public PassportRepository(IDbConnection connection) : base(connection, "Passports")
+    private readonly IDbConnection _connection;
+
+    public PassportRepository(IDbConnection connection)
     {
+        _connection = connection;
     }
 
-    public override async Task<int> AddAsync(Passport passport)
+    public async Task<int> AddAsync(Passport passport)
     {
         var sql = @"INSERT INTO Passports (Type, Number) 
                    VALUES (@Type, @Number);
@@ -19,7 +22,7 @@ public class PassportRepository : BaseRepository<Passport>, IPassportRepository
         return await _connection.QuerySingleAsync<int>(sql, passport);
     }
 
-    public override async Task<bool> UpdateAsync(Passport passport)
+    public async Task<bool> UpdateAsync(Passport passport)
     {
         var sql = @"UPDATE Passports 
                    SET Type = @Type, Number = @Number 
@@ -28,24 +31,9 @@ public class PassportRepository : BaseRepository<Passport>, IPassportRepository
         return rowsAffected > 0;
     }
 
-    public async Task<Passport> GetByTypeAndNumberAsync(string type, string number)
+    public async Task<IEnumerable<Passport>> GetAllAsync()
     {
-        var sql = "SELECT * FROM Passports WHERE Type = @Type AND Number = @Number";
-        return await _connection.QuerySingleOrDefaultAsync<Passport>(sql, new { Type = type, Number = number });
-    }
-
-    public async Task<Passport> GetOrCreatePassportAsync(string type, string number)
-    {
-        var existing = await GetByTypeAndNumberAsync(type, number);
-        if (existing != null)
-            return existing;
-
-        var passport = new Passport
-        {
-            Type = type,
-            Number = number
-        };
-        passport.Id = await AddAsync(passport);
-        return passport;
+        var sql = "SELECT * FROM Passports";
+        return await _connection.QueryAsync<Passport>(sql);
     }
 }

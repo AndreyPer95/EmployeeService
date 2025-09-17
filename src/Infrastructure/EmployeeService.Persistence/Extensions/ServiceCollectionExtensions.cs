@@ -4,6 +4,7 @@ using EmployeeService.Domain.Interfaces;
 using EmployeeService.Domain.Interfaces.Repositories;
 using EmployeeService.Persistence.Factories;
 using EmployeeService.Persistence.Repositories;
+using EmployeeService.Persistence.UnitOfWork;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,8 +14,8 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IDbConnectionFactory, PostgreSqlConnectionFactory>();
+        services.AddScoped<IUnitOfWork, DataUnitOfWork>();
 
         services.AddScoped<IEmployeeRepository, EmployeeRepository>(provider =>
         {

@@ -1,28 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Data;
-using Dapper;
+﻿using Dapper;
 using EmployeeService.Domain.Entities;
 using EmployeeService.Domain.Interfaces.Repositories;
+using System.Data;
 
 namespace EmployeeService.Persistence.Repositories;
 
-public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepository
+public class DepartmentRepository : IDepartmentRepository
 {
-    public DepartmentRepository(IDbConnection connection) : base(connection, "Departments")
+    private readonly IDbConnection _connection;
+
+    public DepartmentRepository(IDbConnection connection)
     {
+        _connection = connection;
     }
 
-    public override async Task<int> AddAsync(Department department)
-    {
-        var sql = @"INSERT INTO Departments (CompanyId, Name, Phone) 
-                   VALUES (@CompanyId, @Name, @Phone);
-                   SELECT CAST(SCOPE_IDENTITY() as int)";
-        return await _connection.QuerySingleAsync<int>(sql, department);
-    }
-
-    public override async Task<bool> UpdateAsync(Department department)
+    public async Task<bool> UpdateAsync(Department department)
     {
         var sql = @"UPDATE Departments 
                    SET CompanyId = @CompanyId, Name = @Name, Phone = @Phone 
@@ -36,27 +28,9 @@ public class DepartmentRepository : BaseRepository<Department>, IDepartmentRepos
         var sql = "SELECT * FROM Departments WHERE CompanyId = @CompanyId AND Name = @Name";
         return await _connection.QuerySingleOrDefaultAsync<Department>(sql, new { CompanyId = companyId, Name = name });
     }
-
-    public async Task<Department> GetOrCreateDepartmentAsync(int companyId, string name, string phone)
+    public async Task<IEnumerable<Department>> GetAllAsync()
     {
-        var existing = await GetByCompanyAndNameAsync(companyId, name);
-        if (existing != null)
-        {
-            if (existing.Phone != phone)
-            {
-                existing.Phone = phone;
-                await UpdateAsync(existing);
-            }
-            return existing;
-        }
-
-        var department = new Department
-        {
-            CompanyId = companyId,
-            Name = name,
-            Phone = phone
-        };
-        department.Id = await AddAsync(department);
-        return department;
+        var sql = "SELECT * FROM Departments";
+        return await _connection.QueryAsync<Department>(sql);
     }
 }

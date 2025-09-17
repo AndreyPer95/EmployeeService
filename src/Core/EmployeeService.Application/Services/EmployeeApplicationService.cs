@@ -1,6 +1,6 @@
-﻿using EmployeeService.Application.DTOs;
+﻿using EmployeeService.Domain.Interfaces;
 using EmployeeService.Domain.Entities;
-using EmployeeService.Domain.Interfaces;
+using EmployeeService.Application.DTOs;
 
 namespace EmployeeService.Application.Services.Implementations;
 
@@ -13,13 +13,25 @@ public class EmployeeApplicationService : IEmployeeApplicationService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<int> CreateEmployeeAsync(CreateEmployeeDto dto)
+    public async Task<int> CreateAsync(CreateEmployeeDto dto)
     {
         try
         {
             _unitOfWork.BeginTransaction();
-            var passport = await _unitOfWork.Passports.GetOrCreatePassportAsync(dto.Passport.Type, dto.Passport.Number);
-            var department = await _unitOfWork.Departments.GetOrCreateDepartmentAsync(dto.CompanyId, dto.Department.Name, dto.Department.Phone);
+            if (dto.Passport == null) 
+                throw new InvalidOperationException($"Необходимо добавить паспортные данные");
+
+            var passport = new Passport
+            {
+                Type = dto.Passport.Type,
+                Number = dto.Passport.Number
+            };
+            passport.Id = await _unitOfWork.Passports.AddAsync(passport);
+
+            var departments = await _unitOfWork.Departments.GetAllAsync();
+            var department = departments.FirstOrDefault(d => d.CompanyId == dto.CompanyId && d.Name == dto.Department.Name);
+            if (department == null)
+                throw new InvalidOperationException($"Отдел {dto.Department.Name} в компании {dto.CompanyId} не найден");
 
             var employee = new Employee
             {
@@ -43,13 +55,13 @@ public class EmployeeApplicationService : IEmployeeApplicationService
         }
     }
 
-    public async Task<bool> DeleteEmployeeAsync(int id)
+    public async Task<bool> DeleteAsync(int id)
     {
         try
         {
             _unitOfWork.BeginTransaction();
 
-            var deleted = await _unitOfWork.Employees.DeleteAsync(id);
+            var deleted = await _unitOfWork.Employees.DeleteWithPassportAsync(id);
 
             _unitOfWork.Commit();
             return deleted;
@@ -61,45 +73,60 @@ public class EmployeeApplicationService : IEmployeeApplicationService
         }
     }
 
-    public async Task<IEnumerable<EmployeeResponseDto>> GetEmployeesByCompanyAsync(int companyId)
+    public async Task<IEnumerable<EmployeeResponseDto>> GetByCompanyAsync(int companyId)
     {
-        var employees = await _unitOfWork.Employees.GetEmployeesByCompanyAsync(companyId);
+        var employees = await _unitOfWork.Employees.GetByCompanyAsync(companyId);
         return employees.Select(MapToDto);
     }
 
-    public async Task<IEnumerable<EmployeeResponseDto>> GetEmployeesByDepartmentAsync(int companyId, string departmentName)
+    public async Task<IEnumerable<EmployeeResponseDto>> GetByDepartmentAsync(int companyId, string departmentName)
     {
-        var employees = await _unitOfWork.Employees.GetEmployeesByDepartmentAsync(companyId, departmentName);
+        var employees = await _unitOfWork.Employees.GetByDepartmentAsync(companyId, departmentName);
         return employees.Select(MapToDto);
     }
 
-    public async Task<bool> UpdateEmployeeAsync(int id, UpdateEmployeeDto dto)
+    public async Task<bool> UpdateAsync(int id, UpdateEmployeeDto dto)
     {
         try
         {
             _unitOfWork.BeginTransaction();
 
-            var updates = new Dictionary<string, object>();
+            var employee = await _unitOfWork.Employees.GetByIdAsync(id);
+            if (employee == null) return false;
 
-            if (dto.Name != null) updates["Name"] = dto.Name;
-            if (dto.Surname != null) updates["Surname"] = dto.Surname;
-            if (dto.Phone != null) updates["Phone"] = dto.Phone;
-            if (dto.CompanyId.HasValue) updates["CompanyId"] = dto.CompanyId.Value;
+            if (dto.Name != null)
+                employee.Name = dto.Name;
+
+            if (dto.Surname != null)
+                employee.Surname = dto.Surname;
+
+            if (dto.Phone != null)
+                employee.Phone = dto.Phone;
+
+            if (dto.CompanyId.HasValue)
+                employee.CompanyId = dto.CompanyId.Value;
 
             if (dto.Passport != null)
             {
-                var passport = await _unitOfWork.Passports.GetOrCreatePassportAsync(dto.Passport.Type, dto.Passport.Number);
-                updates["PassportId"] = passport.Id;
+                var passports = await _unitOfWork.Passports.GetAllAsync();
+                var passport = passports.FirstOrDefault(p => p.Type == dto.Passport.Type && p.Number == dto.Passport.Number);
+                if (passport == null)
+                    throw new InvalidOperationException($"Паспорт {dto.Passport.Type} {dto.Passport.Number} не найден");
+
+                employee.PassportId = passport.Id;
             }
 
             if (dto.Department != null)
             {
-                var companyId = dto.CompanyId ?? (await _unitOfWork.Employees.GetByIdAsync(id))?.CompanyId ?? 0;
-                var department = await _unitOfWork.Departments.GetOrCreateDepartmentAsync(companyId, dto.Department.Name, dto.Department.Phone);
-                updates["DepartmentId"] = department.Id;
+                var departments = await _unitOfWork.Departments.GetAllAsync();
+                var department = departments.FirstOrDefault(d => d.CompanyId == employee.CompanyId && d.Name == dto.Department.Name);
+                if (department == null)
+                    throw new InvalidOperationException($"Отдел {dto.Department.Name} в компании {employee.CompanyId} не найден");
+
+                employee.DepartmentId = department.Id;
             }
 
-            var updated = await _unitOfWork.Employees.PartialUpdateEmployeeAsync(id, updates);
+            var updated = await _unitOfWork.Employees.PartialUpdateAsync(employee);
 
             _unitOfWork.Commit();
             return updated;
@@ -109,12 +136,6 @@ public class EmployeeApplicationService : IEmployeeApplicationService
             _unitOfWork.Rollback();
             throw;
         }
-    }
-
-    public async Task<EmployeeResponseDto> GetEmployeeByIdAsync(int id)
-    {
-        var employee = await _unitOfWork.Employees.GetEmployeeWithDetailsAsync(id);
-        return employee == null ? null : MapToDto(employee);
     }
 
     private EmployeeResponseDto MapToDto(Employee employee)

@@ -1,10 +1,13 @@
-﻿using EmployeeService.Domain.Interfaces;
+﻿using System.Data;
+using EmployeeService.Domain.Entities;
+using EmployeeService.Domain.Interfaces;
 using EmployeeService.Domain.Interfaces.Repositories;
 using EmployeeService.Persistence.Factories;
 using EmployeeService.Persistence.Repositories;
-using System.Data;
 
-public class UnitOfWork : IUnitOfWork
+namespace EmployeeService.Persistence.UnitOfWork;
+
+public class DataUnitOfWork : IUnitOfWork
 {
     private readonly IDbConnection _connection;
     private IDbTransaction _transaction;
@@ -12,7 +15,7 @@ public class UnitOfWork : IUnitOfWork
     private IDepartmentRepository _departmentRepository;
     private IPassportRepository _passportRepository;
 
-    public UnitOfWork(IDbConnectionFactory connectionFactory)
+    public DataUnitOfWork(IDbConnectionFactory connectionFactory)
     {
         _connection = connectionFactory.CreateConnection();
         _connection.Open();
@@ -21,30 +24,10 @@ public class UnitOfWork : IUnitOfWork
     public IEmployeeRepository Employees => _employeeRepository ??= new EmployeeRepository(_connection);
     public IDepartmentRepository Departments => _departmentRepository ??= new DepartmentRepository(_connection);
     public IPassportRepository Passports => _passportRepository ??= new PassportRepository(_connection);
+
     public IDbTransaction Transaction => _transaction;
-
-    public void BeginTransaction()
-    {
-        _transaction = _connection.BeginTransaction();
-    }
-
-    public void Commit()
-    {
-        _transaction?.Commit();
-        _transaction?.Dispose();
-        _transaction = null;
-    }
-
-    public void Rollback()
-    {
-        _transaction?.Rollback();
-        _transaction?.Dispose();
-        _transaction = null;
-    }
-
-    public void Dispose()
-    {
-        _transaction?.Dispose();
-        _connection?.Dispose();
-    }
+    public void BeginTransaction() => _transaction = _connection.BeginTransaction();
+    public void Commit() => _transaction?.Commit();
+    public void Rollback() => _transaction?.Rollback();
+    public void Dispose() => _connection?.Dispose();
 }

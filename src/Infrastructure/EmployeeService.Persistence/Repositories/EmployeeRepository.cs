@@ -5,13 +5,16 @@ using EmployeeService.Domain.Interfaces.Repositories;
 
 namespace EmployeeService.Persistence.Repositories;
 
-public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
+public class EmployeeRepository : IEmployeeRepository
 {
-    public EmployeeRepository(IDbConnection connection) : base(connection, "Employees")
+    private readonly IDbConnection _connection;
+
+    public EmployeeRepository(IDbConnection connection)
     {
+        _connection = connection;
     }
 
-    public override async Task<int> AddAsync(Employee employee)
+    public async Task<int> AddAsync(Employee employee)
     {
         var sql = @"INSERT INTO Employees (Name, Surname, Phone, CompanyId, DepartmentId, PassportId) 
                    VALUES (@Name, @Surname, @Phone, @CompanyId, @DepartmentId, @PassportId);
@@ -19,41 +22,7 @@ public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
         return await _connection.QuerySingleAsync<int>(sql, employee);
     }
 
-    public override async Task<bool> UpdateAsync(Employee employee)
-    {
-        var sql = @"UPDATE Employees 
-                   SET Name = @Name, Surname = @Surname, Phone = @Phone, 
-                       CompanyId = @CompanyId, DepartmentId = @DepartmentId, PassportId = @PassportId 
-                   WHERE Id = @Id";
-        var rowsAffected = await _connection.ExecuteAsync(sql, employee);
-        return rowsAffected > 0;
-    }
-
-    public async Task<Employee> GetEmployeeWithDetailsAsync(int id)
-    {
-        var sql = @"SELECT e.Id, e.Name, e.Surname, e.Phone, e.CompanyId, e.DepartmentId, e.PassportId,
-                           d.Id, d.CompanyId, d.Name, d.Phone,
-                           p.Id, p.Type, p.Number
-                    FROM Employees e
-                    LEFT JOIN Departments d ON e.DepartmentId = d.Id
-                    LEFT JOIN Passports p ON e.PassportId = p.Id
-                    WHERE e.Id = @Id";
-
-        var employee = await _connection.QueryAsync<Employee, Department, Passport, Employee>(
-            sql,
-            (emp, dept, passport) =>
-            {
-                emp.Department = dept;
-                emp.Passport = passport;
-                return emp;
-            },
-            new { Id = id },
-            splitOn: "Id,Id");
-
-        return employee.FirstOrDefault();
-    }
-
-    public async Task<IEnumerable<Employee>> GetEmployeesByCompanyAsync(int companyId)
+    public async Task<IEnumerable<Employee>> GetByCompanyAsync(int companyId)
     {
         var sql = @"SELECT e.Id, e.Name, e.Surname, e.Phone, e.CompanyId, e.DepartmentId, e.PassportId,
                            d.Id, d.CompanyId, d.Name, d.Phone,
@@ -84,7 +53,7 @@ public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
         return employeeDict.Values;
     }
 
-    public async Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(int companyId, string departmentName)
+    public async Task<IEnumerable<Employee>> GetByDepartmentAsync(int companyId, string departmentName)
     {
         var sql = @"SELECT e.Id, e.Name, e.Surname, e.Phone, e.CompanyId, e.DepartmentId, e.PassportId,
                            d.Id, d.CompanyId, d.Name, d.Phone,
@@ -115,22 +84,44 @@ public class EmployeeRepository : BaseRepository<Employee>, IEmployeeRepository
         return employeeDict.Values;
     }
 
-    public async Task<bool> PartialUpdateEmployeeAsync(int id, Dictionary<string, object> updates)
+    public async Task<bool> PartialUpdateAsync(Employee updateEmployee)
     {
-        if (!updates.Any())
-            return false;
+        var sql = @"UPDATE Employees 
+               SET Name = @Name, Surname = @Surname, Phone = @Phone, 
+                   CompanyId = @CompanyId, DepartmentId = @DepartmentId, PassportId = @PassportId 
+               WHERE Id = @Id";
 
-        var fieldsToUpdate = string.Join(", ", updates.Keys.Select(key => $"{key} = @{key}"));
-        var sql = $"UPDATE Employees SET {fieldsToUpdate} WHERE Id = @Id";
+        var rowsAffected = await _connection.ExecuteAsync(sql, updateEmployee);
+        return rowsAffected > 0;
+    }
 
-        var parameters = new DynamicParameters();
-        parameters.Add("Id", id);
-        foreach (var update in updates)
+    public async Task<bool> DeleteWithPassportAsync(int id)
+    {
+        try
         {
-            parameters.Add(update.Key, update.Value);
+            var employee = await GetByIdAsync(id);
+            if (employee == null) return false;
+            
+            var passportDeleted = await _connection.ExecuteAsync(
+                "DELETE FROM Passports WHERE Id = @PassportId",
+                new { employee.PassportId });
+
+            var employeeDeleted = await _connection.ExecuteAsync(
+                "DELETE FROM Employees WHERE Id = @Id",
+                new { Id = id });
+
+            return employeeDeleted > 0;
         }
 
-        var rowsAffected = await _connection.ExecuteAsync(sql, parameters);
-        return rowsAffected > 0;
+        catch
+        {
+            throw;
+        }
+    }
+
+    public async Task<Employee> GetByIdAsync(int id)
+    {
+        var sql = "SELECT * FROM Employees WHERE Id = @Id";
+        return await _connection.QuerySingleOrDefaultAsync<Employee>(sql, new { Id = id });
     }
 }
