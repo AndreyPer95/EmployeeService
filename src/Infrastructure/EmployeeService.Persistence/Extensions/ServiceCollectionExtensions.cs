@@ -16,28 +16,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddSingleton<IDbConnectionFactory, PostgreSqlConnectionFactory>();
         services.AddScoped<IUnitOfWork, DataUnitOfWork>();
-
-        services.AddScoped<IEmployeeRepository, EmployeeRepository>(provider =>
-        {
-            var factory = provider.GetRequiredService<IDbConnectionFactory>();
-            var connection = factory.CreateConnection();
-            return new EmployeeRepository(connection);
-        });
-
-        services.AddScoped<IDepartmentRepository, DepartmentRepository>(provider =>
-        {
-            var factory = provider.GetRequiredService<IDbConnectionFactory>();
-            var connection = factory.CreateConnection();
-            return new DepartmentRepository(connection);
-        });
-
-        services.AddScoped<IPassportRepository, PassportRepository>(provider =>
-        {
-            var factory = provider.GetRequiredService<IDbConnectionFactory>();
-            var connection = factory.CreateConnection();
-            return new PassportRepository(connection);
-        });
-
         return services;
     }
 

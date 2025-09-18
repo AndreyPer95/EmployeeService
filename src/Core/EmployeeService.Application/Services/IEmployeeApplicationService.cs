@@ -12,7 +12,7 @@ namespace EmployeeService.Application.Services
         Task<int> CreateAsync(CreateEmployeeDto employeeDto);
         Task<bool> DeleteAsync(int id);
         Task<IEnumerable<EmployeeResponseDto>> GetByCompanyAsync(int companyId);
-        Task<IEnumerable<EmployeeResponseDto>> GetByDepartmentAsync(int companyId, string departmentName);
+        Task<IEnumerable<EmployeeResponseDto>> GetByDepartmentAsync(int companyId, int departmentId);
         Task<bool> UpdateAsync(int id, UpdateEmployeeDto updateDto);
     }
 }

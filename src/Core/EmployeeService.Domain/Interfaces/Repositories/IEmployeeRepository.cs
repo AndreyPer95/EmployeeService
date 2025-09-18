@@ -2,13 +2,9 @@
 
 namespace EmployeeService.Domain.Interfaces.Repositories
 {
-    public interface IEmployeeRepository 
+    public interface IEmployeeRepository : IRepository<Employee>
     {
-        Task<int> AddAsync(Employee employee);
-        Task<bool> PartialUpdateAsync(Employee updateEmployee);
-        Task<Employee> GetByIdAsync(int id);
         Task<IEnumerable<Employee>> GetByCompanyAsync(int companyId);
-        Task<IEnumerable<Employee>> GetByDepartmentAsync(int companyId, string departmentName);
-        Task<bool>  DeleteAsync(int id);
+        Task<IEnumerable<Employee>> GetByDepartmentAsync(int companyId, int departmentId);
     }
 }

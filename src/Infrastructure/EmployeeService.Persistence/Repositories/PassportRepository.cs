@@ -1,11 +1,10 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
 using EmployeeService.Domain.Entities;
-using EmployeeService.Domain.Interfaces.Repositories;
+using System.Data;
 
 namespace EmployeeService.Persistence.Repositories;
 
-public class PassportRepository : IPassportRepository
+public class PassportRepository : BaseRepository<Passport>
 {
     private readonly IDbConnection _connection;
     static PassportRepository()
@@ -13,12 +12,12 @@ public class PassportRepository : IPassportRepository
         DefaultTypeMap.MatchNamesWithUnderscores = true;
     }
 
-    public PassportRepository(IDbConnection connection)
+    public PassportRepository(IDbConnection connection) : base(connection, "passports")
     {
         _connection = connection;
     }
 
-    public async Task<int> AddAsync(Passport passport)
+    public override async Task<int> AddAsync(Passport passport)
     {
         var sql = @"INSERT INTO passports (type, number) 
                     VALUES (@Type, @Number) 
@@ -26,7 +25,7 @@ public class PassportRepository : IPassportRepository
         return await _connection.QuerySingleAsync<int>(sql, passport);
     }
 
-    public async Task<bool> UpdateAsync(Passport passport)
+    public override async Task<bool> UpdateAsync(Passport passport)
     {
         var sql = @"UPDATE passports 
                     SET type = @Type, number = @Number 
@@ -35,9 +34,4 @@ public class PassportRepository : IPassportRepository
         return rowsAffected > 0;
     }
 
-    public async Task<IEnumerable<Passport>> GetAllAsync()
-    {
-        var sql = "SELECT * FROM passports";
-        return await _connection.QueryAsync<Passport>(sql);
-    }
 }

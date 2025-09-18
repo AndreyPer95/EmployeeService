@@ -12,8 +12,8 @@ public class DataUnitOfWork : IUnitOfWork
     private readonly IDbConnection _connection;
     private IDbTransaction _transaction;
     private IEmployeeRepository _employeeRepository;
-    private IDepartmentRepository _departmentRepository;
-    private IPassportRepository _passportRepository;
+    private IRepository<Department> _departmentRepository;
+    private IRepository<Passport> _passportRepository;
 
     public DataUnitOfWork(IDbConnectionFactory connectionFactory)
     {
@@ -22,8 +22,8 @@ public class DataUnitOfWork : IUnitOfWork
     }
 
     public IEmployeeRepository Employees => _employeeRepository ??= new EmployeeRepository(_connection);
-    public IDepartmentRepository Departments => _departmentRepository ??= new DepartmentRepository(_connection);
-    public IPassportRepository Passports => _passportRepository ??= new PassportRepository(_connection);
+    public IRepository<Department> Departments => _departmentRepository ??= new DepartmentRepository(_connection);
+    public IRepository<Passport> Passports => _passportRepository ??= new PassportRepository(_connection);
 
     public IDbTransaction Transaction => _transaction;
     public void BeginTransaction() => _transaction = _connection.BeginTransaction();

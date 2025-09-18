@@ -1,11 +1,10 @@
 ﻿using Dapper;
 using EmployeeService.Domain.Entities;
-using EmployeeService.Domain.Interfaces.Repositories;
 using System.Data;
 
 namespace EmployeeService.Persistence.Repositories;
 
-public class DepartmentRepository : IDepartmentRepository
+public class DepartmentRepository : BaseRepository<Department>
 {
     private readonly IDbConnection _connection;
     
@@ -14,28 +13,25 @@ public class DepartmentRepository : IDepartmentRepository
         DefaultTypeMap.MatchNamesWithUnderscores = true;
     }
 
-    public DepartmentRepository(IDbConnection connection)
+    public DepartmentRepository(IDbConnection connection) : base(connection, "departments")
     {
         _connection = connection;
     }
 
-    public async Task<bool> UpdateAsync(Department department)
+    public override async Task<int> AddAsync(Department department)
+    {
+        var sql = @"INSERT INTO departments (name, phone) 
+                    VALUES (@Name, @Phone) 
+                    RETURNING id";
+        return await _connection.QuerySingleAsync<int>(sql, department);
+    }
+
+    public override async Task<bool> UpdateAsync(Department department)
     {
         var sql = @"UPDATE departments 
                     SET company_id = @CompanyId, name = @Name, phone = @Phone 
                     WHERE id = @Id";
         var rowsAffected = await _connection.ExecuteAsync(sql, department);
         return rowsAffected > 0;
-    }
-
-    public async Task<Department> GetByCompanyAndNameAsync(int companyId, string name)
-    {
-        var sql = "SELECT * FROM departments WHERE company_id = @CompanyId AND name = @Name";
-        return await _connection.QuerySingleOrDefaultAsync<Department>(sql, new { CompanyId = companyId, Name = name });
-    }
-    public async Task<IEnumerable<Department>> GetAllAsync()
-    {
-        var sql = "SELECT * FROM departments";
-        return await _connection.QueryAsync<Department>(sql);
     }
 }

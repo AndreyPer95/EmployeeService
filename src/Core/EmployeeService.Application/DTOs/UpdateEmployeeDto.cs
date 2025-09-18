@@ -12,6 +12,8 @@ namespace EmployeeService.Application.DTOs
         public string? Surname { get; set; }
         public string? Phone { get; set; }
         public int? CompanyId { get; set; }
+        public int DepartmentId { get; set; }
+        public int PassportId { get; set; }
         public PassportDto? Passport { get; set; }
         public DepartmentDto? Department { get; set; }
     }
