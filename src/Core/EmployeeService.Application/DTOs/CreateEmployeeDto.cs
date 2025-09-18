@@ -14,6 +14,5 @@ namespace EmployeeService.Application.DTOs
         public int CompanyId { get; set; }
         public int DepartmentId { get; set; } 
         public PassportDto Passport { get; set; }
-        public DepartmentDto Department { get; set; }
     }
 }

@@ -16,8 +16,7 @@ public class EmployeeApplicationService : IEmployeeApplicationService
     public async Task<int> CreateAsync(CreateEmployeeDto dto)
     {
         try
-        {
-            _unitOfWork.BeginTransaction();
+        {            
             if (dto.Passport == null) 
                 throw new InvalidOperationException($"Необходимо добавить паспортные данные");
 
@@ -25,12 +24,11 @@ public class EmployeeApplicationService : IEmployeeApplicationService
             {
                 Type = dto.Passport.Type,
                 Number = dto.Passport.Number
-            };
-            passport.Id = await _unitOfWork.Passports.AddAsync(passport);
+            };           
 
-            var department = _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId);
+            var department = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId);
             if (department == null)
-                throw new InvalidOperationException($"Отдел {dto.Department.Name} в компании {dto.CompanyId} не найден");
+                throw new InvalidOperationException($"Отдел в компании {dto.CompanyId} не найден");
 
             var employee = new Employee
             {
@@ -41,7 +39,11 @@ public class EmployeeApplicationService : IEmployeeApplicationService
                 DepartmentId = department.Id,
                 PassportId = passport.Id
             };
-
+            
+            _unitOfWork.BeginTransaction();
+            
+            passport.Id = await _unitOfWork.Passports.AddAsync(passport);
+            employee.PassportId = passport.Id;
             var employeeId = await _unitOfWork.Employees.AddAsync(employee);
 
             _unitOfWork.Commit();
@@ -109,7 +111,7 @@ public class EmployeeApplicationService : IEmployeeApplicationService
 
             if (dto.Passport != null)
             {
-                var passport = _unitOfWork.Passports.GetByIdAsync(dto.PassportId);
+                var passport = await _unitOfWork.Passports.GetByIdAsync(dto.PassportId);
                 if (passport == null)
                     throw new InvalidOperationException($"Паспорт не найден");
 
@@ -118,7 +120,7 @@ public class EmployeeApplicationService : IEmployeeApplicationService
 
             if (dto.Department != null)
             {
-                var department = _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId);
+                var department = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId);
                 if (department == null)
                     throw new InvalidOperationException($"Отдел {dto.Department.Name} в компании {employee.CompanyId} не найден");
 
