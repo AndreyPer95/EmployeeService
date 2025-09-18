@@ -111,20 +111,29 @@ public class EmployeeApplicationService : IEmployeeApplicationService
 
             if (dto.Passport != null)
             {
-                var passport = await _unitOfWork.Passports.GetByIdAsync(dto.PassportId);
+                var passport = await _unitOfWork.Passports.GetByIdAsync(employee.PassportId);
                 if (passport == null)
                     throw new InvalidOperationException($"Паспорт не найден");
 
-                employee.PassportId = passport.Id;
+                if (dto.Passport.Type != null)
+                    passport.Type = dto.Passport.Type;
+                if (dto.Passport.Number != null)
+                    passport.Number = dto.Passport.Number;
+
+                var updatedPassport = await _unitOfWork.Passports.UpdateAsync(passport);
             }
 
-            if (dto.Department != null)
+            if (dto.DepartmentId.HasValue)
             {
-                var department = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId);
-                if (department == null)
-                    throw new InvalidOperationException($"Отдел {dto.Department.Name} в компании {employee.CompanyId} не найден");
+                var currentDepartment = await _unitOfWork.Departments.GetByIdAsync(employee.DepartmentId);
+                if (currentDepartment == null)
+                    throw new InvalidOperationException($"Отдел в компании {employee.CompanyId} не найден");
+                
+                var exist = await _unitOfWork.Departments.GetByIdAsync(dto.DepartmentId.Value);
+                if (exist == null)
+                    throw new InvalidOperationException($"Отдел в компании {employee.CompanyId} не найден");
 
-                employee.DepartmentId = department.Id;
+                employee.DepartmentId = dto.DepartmentId.Value;
             }
 
             var updated = await _unitOfWork.Employees.UpdateAsync(employee);
